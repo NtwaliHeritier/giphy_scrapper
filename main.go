@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -20,7 +21,11 @@ func main() {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				data := api.FetchGif(gif, 3)
+				data, err := api.FetchGif(gif, 3)
+
+				if err != nil {
+					log.Fatal(err)
+				}
 
 				dataChannel <- data
 			}()

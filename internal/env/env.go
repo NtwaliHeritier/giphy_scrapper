@@ -1,16 +1,16 @@
 package env
 
 import (
-	"log"
+	"errors"
 	"os"
 )
 
-func GetString(key string) string {
+func GetString(key string) (string, error) {
 	val, ok := os.LookupEnv(key)
 
 	if !ok {
-		log.Fatal("You need to save an api key in your .env file as API_KEY")
+		return "", errors.New("you need to save an api key in your .env file as API_KEY")
 	}
 
-	return val
+	return val, nil
 }
