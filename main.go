@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -11,7 +14,17 @@ import (
 )
 
 func main() {
-	gifs := []string{"bear", "mouse", "people", "computer", "football"}
+	fmt.Println("Enter gif suggestions")
+	reader := bufio.NewReader(os.Stdin)
+	inputs, err := reader.ReadString('\n')
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	gifs := strings.FieldsFunc(strings.TrimSpace(inputs), func(r rune) bool {
+		return r == ' ' || r == ','
+	})
+
 	var wg sync.WaitGroup
 	dataChannel := make(chan api.Response)
 
@@ -19,16 +32,17 @@ func main() {
 	go func() {
 		for _, gif := range gifs {
 			wg.Add(1)
-			go func() {
+			go func(g string) {
 				defer wg.Done()
-				data, err := api.FetchGif(gif, 3)
+				data, err := api.FetchGif(g, 3)
 
 				if err != nil {
-					log.Fatal(err)
+					log.Printf("failed to fetch %s: %v", g, err)
+					return
 				}
 
 				dataChannel <- data
-			}()
+			}(gif)
 		}
 		wg.Wait()
 		close(dataChannel)
@@ -37,10 +51,10 @@ func main() {
 	for data := range dataChannel {
 		b, err := json.MarshalIndent(data, "", " ")
 		if err != nil {
-			panic(err)
+			log.Printf("failed to marshal response: %v", err)
+			continue
 		}
 		fmt.Println(string(b))
-		fmt.Println("============")
 	}
 
 	fmt.Printf("It took %v to fetch results", time.Since(startTime))
