@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
-	env "github.com/ntwaliheritier/giphy_scrapper/internal/env"
 )
 
 type Response struct {
@@ -19,14 +17,11 @@ type GIF struct {
 	Title string `json:"title"`
 }
 
-func FetchGif(query string, limit int) (Response, error) {
-	apiKey, err := env.GetString("API_KEY")
-	if err != nil {
-		return Response{}, err
-	}
-
-	url := fmt.Sprintf("https://api.giphy.com/v1/gifs/search?api_key=%s&q=%s&limit=%d", apiKey, query, limit)
-	resp, err := http.Get(url)
+func FetchGif(client *http.Client, baseURL, apiKey, query string, limit int) (Response, error) {
+	url := fmt.Sprintf("%s/v1/gifs/search?api_key=%s&q=%s&limit=%d",
+		baseURL, apiKey, query, limit,
+	)
+	resp, err := client.Get(url)
 
 	if err != nil {
 		return Response{}, err

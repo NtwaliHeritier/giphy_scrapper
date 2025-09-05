@@ -5,15 +5,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
 	api "github.com/ntwaliheritier/giphy_scrapper/api"
+	env "github.com/ntwaliheritier/giphy_scrapper/internal/env"
 )
 
 func main() {
+	apiKey, err := env.GetString("API_KEY")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	client := &http.Client{}
+	baseURL := "https://api.giphy.com"
+
 	fmt.Println("Enter gif suggestions")
 	reader := bufio.NewReader(os.Stdin)
 	inputs, err := reader.ReadString('\n')
@@ -34,7 +45,7 @@ func main() {
 			wg.Add(1)
 			go func(g string) {
 				defer wg.Done()
-				data, err := api.FetchGif(g, 3)
+				data, err := api.FetchGif(client, baseURL, apiKey, g, 3)
 
 				if err != nil {
 					log.Printf("failed to fetch %s: %v", g, err)
